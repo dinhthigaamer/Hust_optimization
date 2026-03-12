@@ -87,30 +87,30 @@ pair<int, vector<int>> insert_point_to_path(int p, vector<int> path, int limit =
     int dist = tmp.first;
     path = tmp.second;
 
-    while (1)
-    {
-        pair<int, int> solution = {0, 0};
-        int min_dist = dist;
-        // swap 2 point in the road
-        for (int i = 1; i < path.size() - 1; ++i)
-        {
-            for (int j = i + 1; j < path.size(); ++j)
-            {
-                int new_dist = swap_point(path, dist, i, j);
+    // while (1)
+    // {
+    //     pair<int, int> solution = {0, 0};
+    //     int min_dist = dist;
+    //     // swap 2 point in the road
+    //     for (int i = 1; i < path.size() - 1; ++i)
+    //     {
+    //         for (int j = i + 1; j < path.size(); ++j)
+    //         {
+    //             int new_dist = swap_point(path, dist, i, j);
 
-                if (min_dist > new_dist)
-                {
-                    min_dist = new_dist;
-                    solution = {i, j};
-                }
-            }
-        }
+    //             if (min_dist > new_dist)
+    //             {
+    //                 min_dist = new_dist;
+    //                 solution = {i, j};
+    //             }
+    //         }
+    //     }
 
-        if (solution.first == 0)
-            break;
-        dist = min_dist;
-        swap(path[solution.first], path[solution.second]);
-    }
+    //     if (solution.first == 0)
+    //         break;
+    //     dist = min_dist;
+    //     swap(path[solution.first], path[solution.second]);
+    // }
 
     return {dist, path};
 }
@@ -144,11 +144,21 @@ void decrese_longest_path()
 
         vector<int> &tmp = paths[max_truck];
 
-        for (int i = 1; i < tmp.size() - 1; ++i)
+        int min_solution = 1e9;
+        int new_truck = 0;
+        vector<int> new_path = {};
+
+        int sz = (int)tmp.size() - 1;
+
+        for (int i = 1; i < sz; ++i)
         {
             // remove point paths[max_truck][i]
-            int new_dist = max_dist - (d[tmp[i - 1]][tmp[i]] + d[tmp[i]][tmp[i + 1]]);
-            new_dist += d[tmp[i - 1]][tmp[i + 1]];
+            int new_dist = max_dist - d[tmp[i - 1]][tmp[i]];
+            if (i < tmp.size() - 1)
+            {
+                new_dist -= d[tmp[i]][tmp[i + 1]];
+                new_dist += d[tmp[i - 1]][tmp[i + 1]];
+            }
 
             if (new_dist >= max_dist)
                 continue;
@@ -161,11 +171,20 @@ void decrese_longest_path()
                 if (res.first >= max_dist)
                     continue;
 
-                tmp.erase(tmp.begin() + i);
-                paths[x] = res.second;
-                better = 1;
-                break;
+                if (res.first < min_solution)
+                {
+                    min_solution = res.first;
+                    new_truck = x;
+                    new_path = res.second;
+                }
             }
+
+            if (new_truck == 0)
+                continue;
+            better = 1;
+            tmp.erase(tmp.begin() + i);
+            paths[new_truck] = new_path;
+            break;
         }
 
         if (better == 0)
