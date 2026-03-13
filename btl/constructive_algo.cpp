@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
+#include <chrono>
 using namespace std;
-
+using namespace chrono;
 #define MAXN 1005
 #define MAXK 105
 
@@ -40,6 +41,28 @@ struct insert_point_method
         path = tmp_path;
 
         return {dist, path};
+    }
+
+    int find_suitable_vector(int p, vector<vector<int>> &paths)
+    {
+        // cerr << p << endl;
+        int min_dist = 1e9;
+        int x = 1;
+        vector<int> tmp_path = {};
+
+        for (int i = 0; i < k; ++i)
+        {
+            pair<int, vector<int>> new_path = insert_point(p, paths[i]);
+            if (new_path.first < min_dist)
+            {
+                min_dist = new_path.first;
+                x = i;
+                tmp_path = new_path.second;
+            }
+        }
+
+        paths[x] = tmp_path;
+        return x;
     }
 
     void solve(vector<vector<int>> &paths)
@@ -115,7 +138,7 @@ struct swap_point_method
         return new_dist;
     }
 
-    pair<int, vector<int>> solve_each_vector(vector<int> path)
+    void solve_each_vector(vector<int> &path)
     {
         int dist = distance(path);
         while (1)
@@ -142,14 +165,14 @@ struct swap_point_method
             dist = min_dist;
             swap(path[solution.first], path[solution.second]);
         }
-        return {dist, path};
+        // return {dist, path};
     }
 
     void solve(vector<vector<int>> &paths)
     {
         for (int i = 0; i < k; ++i)
         {
-            paths[i] = solve_each_vector(paths[i]).second;
+            solve_each_vector(paths[i]);
         }
     }
 };
@@ -244,21 +267,44 @@ struct decrese_longest_path
     }
 };
 
+// Thay vi xay dung xong quang duong trong tung thuat toan,
+// ta thuc hien ca 3 thuat moi khi them dinh
+struct hybrid_algo
+{
+    insert_point_method ism;
+    swap_point_method spm;
+    decrese_longest_path dlp;
+
+    void solve(vector<vector<int>> &paths)
+    {
+        for (int p = 1; p <= n; ++p)
+        {
+            int x = ism.find_suitable_vector(p, paths);
+            spm.solve_each_vector(paths[x]);
+            // dlp.solve(paths);
+        }
+    }
+};
+
 void solve()
 {
     insert_point_method ipm;
     swap_point_method spm;
     decrese_longest_path dlp;
+    hybrid_algo ha;
+    // generate_method gm;
 
-    ipm.solve(paths);
-    spm.solve(paths);
-    dlp.solve(paths);
+    // ipm.solve(paths);
+    // spm.solve(paths);
+    ha.solve(paths);
+    // dlp.solve(paths);
+    // gm.solve(paths);
 }
 
 int main()
 {
-    // freopen("file.inp", "r", stdin);
-    // freopen("file.out", "w", stdout);
+    freopen("file.inp", "r", stdin);
+    freopen("file.out", "w", stdout);
 
     cin >> n >> k;
 
