@@ -138,7 +138,7 @@ struct swap_point_method
         return new_dist;
     }
 
-    void solve_each_vector(vector<int> &path)
+    pair<int, vector<int>> solve_each_vector(vector<int> path)
     {
         int dist = distance(path);
         while (1)
@@ -165,14 +165,82 @@ struct swap_point_method
             dist = min_dist;
             swap(path[solution.first], path[solution.second]);
         }
-        // return {dist, path};
+        return {dist, path};
     }
 
     void solve(vector<vector<int>> &paths)
     {
         for (int i = 0; i < k; ++i)
         {
-            solve_each_vector(paths[i]);
+            paths[i] = solve_each_vector(paths[i]).second;
+        }
+    }
+};
+
+// Lat doan
+struct reverse_method
+{
+    pair<int, vector<int>> solve_each_vector(vector<int> path)
+    {
+        int sz = (int)path.size();
+        int dist = distance(path);
+        int window_length[] = {2, 3, 5};
+
+        for (int j = 0; j < 3; ++j)
+        {
+            int window = window_length[j];
+
+            for (int cnt = 1; cnt <= 1000; ++cnt)
+            {
+                int min_delta = 1e9;
+                int pos = 1;
+
+                for (int i = 1; i <= sz - window; ++i)
+                {
+                    int u = path[i];
+                    int v = path[i + window - 1];
+
+                    int prev_u = path[i - 1];
+                    int delta;
+
+                    if (i <= sz - window - 1)
+                    {
+                        int post_v = path[i + window];
+                        delta = d[prev_u][v] + d[u][post_v] - d[prev_u][u] - d[v][post_v];
+                    }
+                    else
+                    {
+                        delta = d[prev_u][v] - d[prev_u][u];
+                    }
+
+                    if (delta >= 0)
+                        continue;
+
+                    if (delta < min_delta)
+                    {
+                        min_delta = delta;
+                        pos = i;
+                    }
+                    // dist += delta;
+                    // reverse(path.begin() + i, path.begin() + i + window - 1);
+                }
+
+                if (min_delta >= 0)
+                    break;
+                // cerr << min_delta << endl;
+                reverse(path.begin() + pos, path.begin() + pos + window - 1);
+            }
+        }
+
+        dist = distance(path);
+        return {dist, path};
+    }
+
+    void solve(vector<vector<int>> &paths)
+    {
+        for (int i = 0; i < k; ++i)
+        {
+            paths[i] = solve_each_vector(paths[i]).second;
         }
     }
 };
@@ -186,7 +254,7 @@ struct decrese_longest_path
     void solve(vector<vector<int>> &paths)
     {
         // Thực hiện đến khi ko tìm đc phương án tối ưu
-        for (int tmp = 1; tmp <= 500; ++tmp)
+        for (int tmp = 1; tmp <= 700; ++tmp)
         {
             // Đi tìm path có độ dài max
             int max_dist = 0, max_path = 0;
@@ -273,6 +341,7 @@ struct hybrid_algo
 {
     insert_point_method ism;
     swap_point_method spm;
+    reverse_method rm;
     decrese_longest_path dlp;
 
     void solve(vector<vector<int>> &paths)
@@ -280,9 +349,57 @@ struct hybrid_algo
         for (int p = 1; p <= n; ++p)
         {
             int x = ism.find_suitable_vector(p, paths);
-            spm.solve_each_vector(paths[x]);
-            // dlp.solve(paths);
+
+            paths[x] = spm.solve_each_vector(paths[x]).second;
+            // paths[x] = rm.solve_each_vector(paths[x]).second;
         }
+
+        dlp.solve(paths);
+        rm.solve(paths);
+    }
+
+    void solve_2(vector<vector<int>> &path)
+    {
+        for (int p = 1; p <= n; ++p)
+        {
+            int min_dist = 1e9;
+            vector<int> min_vec;
+            int truck = 0;
+
+            for (int i = 0; i < k; ++i)
+            {
+                pair<int, vector<int>> tmp;
+                tmp = ism.insert_point(p, paths[i]);
+                tmp = spm.solve_each_vector(tmp.second);
+                tmp = rm.solve_each_vector(tmp.second);
+
+                if (tmp.first < min_dist)
+                {
+                    min_dist = tmp.first;
+                    truck = i;
+                    min_vec = tmp.second;
+                }
+            }
+
+            paths[truck] = min_vec;
+        }
+
+        dlp.solve(paths);
+    }
+};
+
+struct checker
+{
+    void judge(const vector<vector<int>> &paths)
+    {
+        int max_dist = 0;
+        for (int i = 0; i < k; ++i)
+        {
+            int dist = distance(paths[i]);
+            max_dist = max(max_dist, dist);
+        }
+
+        cout << max_dist << endl;
     }
 };
 
@@ -292,19 +409,24 @@ void solve()
     swap_point_method spm;
     decrese_longest_path dlp;
     hybrid_algo ha;
-    // generate_method gm;
+    reverse_method rm;
+
+    checker ck;
 
     // ipm.solve(paths);
+    // rm.solve(paths);
     // spm.solve(paths);
-    ha.solve(paths);
+
     // dlp.solve(paths);
-    // gm.solve(paths);
+    ha.solve_2(paths);
+
+    // ck.judge(paths);
 }
 
 int main()
 {
-    freopen("file.inp", "r", stdin);
-    freopen("file.out", "w", stdout);
+    // freopen("file.inp", "r", stdin);
+    // freopen("file.out", "w", stdout);
 
     cin >> n >> k;
 
