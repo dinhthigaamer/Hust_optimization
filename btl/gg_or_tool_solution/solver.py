@@ -76,13 +76,7 @@ def print_solution(data, manager, routing, solution):
     print(f"Maximum of the route distances: {max_route_distance}m")
 
 
-def main():
-    n, k = list(map(int, input().split()))
-    d = []
-
-    for i in range(n+1):
-        d.append(list(map(int, input().split())))
-
+def solve(n, k, d):
     """Entry point of the program."""
     # Instantiate the data problem.
     data = create_data_model(n, k, distance_matric=d)
@@ -113,7 +107,7 @@ def main():
     routing.AddDimension(
         transit_callback_index,
         0,  # no slack
-        3000,  # vehicle maximum travel distance
+        300,  # vehicle maximum travel distance
         True,  # start cumul to zero
         dimension_name,
     )
@@ -134,6 +128,30 @@ def main():
         print_solution(data, manager, routing, solution)
     else:
         print("No solution found !")
+
+
+def read_file(file_name):
+    input_data = []
+
+    with open(file_name, "r", encoding="utf-8") as f:
+        n, k = list(map(int, f.readline().split()))
+        d = []
+
+        for _ in range(n+1):
+            d.append(list(map(int, f.readline().split())))
+        input_data = [n, k, d]
+
+    return input_data
+
+
+def main():
+    # n, k = list(map(int, input().split()))
+    # d = []
+
+    # for i in range(n+1):
+    #     d.append(list(map(int, input().split())))
+    n, k, d = read_file("../../test_cases/inputs/test3.txt")
+    solve(n, k, d)
 
 
 if __name__ == "__main__":
